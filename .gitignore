@@ -1,1 +1,6 @@
 *.*~
+*.pyc
+_data/*.tsv
+_data/*.csv
+_logs/*/
+_models/*/

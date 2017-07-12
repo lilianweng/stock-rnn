@@ -2,22 +2,21 @@
 Run the following command to check Tensorboard:
 $ tensorboard --logdir ./_logs
 """
-
 import json
 import os
 import random
 import tensorflow as tf
 
-from .build_graph import default_lstm_graph
-from .config import DEFAULT_CONFIG, MODEL_DIR
-from .data_wrapper import StockDataSet
+from build_graph import build_lstm_graph_with_config
+from config import DEFAULT_CONFIG, MODEL_DIR
+from data_wrapper import StockDataSet
 
 
-def load_sp500_data(config=DEFAULT_CONFIG):
-    SP500_dataset = StockDataSet('SP500', config, test_ratio=0.1, close_price_only=True)
-    print "traing size:", len(SP500_dataset.train_X)
-    print "testing size:", len(SP500_dataset.test_X)
-    print SP500_dataset.test_y
+def load_data(stock_name, config=DEFAULT_CONFIG):
+    stock_dataset = StockDataSet(stock_name, config, test_ratio=0.1, close_price_only=True)
+    print "Train data size:", len(stock_dataset.train_X)
+    print "Test data size:", len(stock_dataset.test_X)
+    return stock_dataset
 
 
 def _compute_learning_rates(config=DEFAULT_CONFIG):
@@ -30,24 +29,23 @@ def _compute_learning_rates(config=DEFAULT_CONFIG):
     return learning_rates_to_use
 
 
-def train_lstm_graph(lstm_graph, stock_dataset, config=DEFAULT_CONFIG):
+def train_lstm_graph(stock_name, lstm_graph, config=DEFAULT_CONFIG):
     """
+    stock_name (str)
     lstm_graph (tf.Graph)
-    stock_dataset (StockDataSet)
     """
+    stock_dataset = load_data(stock_name, config=config)
+
     final_prediction = []
     final_loss = None
 
-    graph_name = "SP500_lr%.2f_lr_decay%.3f_lstm%d_step%d_input%d_batch%d_epoch%d" % (
+    graph_name = "%s_lr%.2f_lr_decay%.3f_lstm%d_step%d_input%d_batch%d_epoch%d" % (
+        stock_name,
         config.init_learning_rate, config.learning_rate_decay,
         config.lstm_size, config.num_steps,
         config.input_size, config.batch_size, config.max_epoch)
 
     print "Graph Name:", graph_name
-
-    graph_saver_dir = os.path.join(MODEL_DIR, graph_name)
-    if not os.path.exists(graph_saver_dir):
-        os.mkdir(graph_saver_dir)
 
     learning_rates_to_use = _compute_learning_rates(config)
     with tf.Session(graph=lstm_graph) as sess:
@@ -55,13 +53,22 @@ def train_lstm_graph(lstm_graph, stock_dataset, config=DEFAULT_CONFIG):
         writer = tf.summary.FileWriter('_logs/' + graph_name, sess.graph)
         writer.add_graph(sess.graph)
 
+        graph = tf.get_default_graph()
         tf.global_variables_initializer().run()
+
+        inputs = graph.get_tensor_by_name('inputs:0')
+        targets = graph.get_tensor_by_name('targets:0')
+        learning_rate = graph.get_tensor_by_name('learning_rate:0')
 
         test_data_feed = {
             inputs: stock_dataset.test_X,
             targets: stock_dataset.test_y,
             learning_rate: 0.0
         }
+
+        loss = graph.get_tensor_by_name('train/loss_mse:0')
+        minimize = graph.get_operation_by_name('train/loss_mse_adam_minimize')
+        prediction = graph.get_tensor_by_name('output_layer/add:0')
 
         for epoch_step in range(config.max_epoch):
             current_lr = learning_rates_to_use[epoch_step]
@@ -90,6 +97,10 @@ def train_lstm_graph(lstm_graph, stock_dataset, config=DEFAULT_CONFIG):
         final_prediction, final_loss = sess.run([prediction, loss], test_data_feed)
         print final_prediction, final_loss
 
+        graph_saver_dir = os.path.join(MODEL_DIR, graph_name)
+        if not os.path.exists(graph_saver_dir):
+            os.mkdir(graph_saver_dir)
+
         saver = tf.train.Saver()
         saver.save(sess, os.path.join(
             graph_saver_dir, "stock_rnn_model_%s.ckpt" % graph_name), global_step=epoch_step)
@@ -98,10 +109,10 @@ def train_lstm_graph(lstm_graph, stock_dataset, config=DEFAULT_CONFIG):
         fout.write(json.dumps(final_prediction.tolist()))
 
 
-def main():
-    sp500_dataset = load_sp500_data()
-    train_lstm_graph(
-        default_lstm_graph,
-        sp500_dataset,
-        config=DEFAULT_CONFIG
-    )
+def main(config=DEFAULT_CONFIG):
+    lstm_graph = build_lstm_graph_with_config(config=config)
+    train_lstm_graph('SP500', lstm_graph, config=config)
+
+
+if __name__ == '__main__':
+    main()

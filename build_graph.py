@@ -2,7 +2,8 @@ import numpy as np
 import random
 import tensorflow as tf
 
-from .config import DEFAULT_CONFIG
+from config import DEFAULT_CONFIG
+
 
 def build_lstm_graph_with_config(config=None):
     tf.reset_default_graph()
@@ -58,7 +59,7 @@ def build_lstm_graph_with_config(config=None):
             # loss = -tf.reduce_sum(targets * tf.log(tf.clip_by_value(prediction, 1e-10, 1.0)))
             loss = tf.reduce_mean(tf.square(prediction - targets), name="loss_mse")
             optimizer = tf.train.AdamOptimizer(learning_rate)
-            minimize = optimizer.minimize(loss)
+            minimize = optimizer.minimize(loss, name="loss_mse_adam_minimize")
             tf.summary.scalar("loss_mse", loss)
 
         # Operators to use after restoring the model
@@ -67,5 +68,3 @@ def build_lstm_graph_with_config(config=None):
 
     return lstm_graph
 
-
-default_lstm_graph = build_lstm_graph_with_config()

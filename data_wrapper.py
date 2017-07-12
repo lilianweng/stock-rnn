@@ -4,7 +4,7 @@ import pandas as pd
 import random
 import time
 
-from .config import DATA_DIR, DEFAULT_CONFIG
+from config import DATA_DIR, DEFAULT_CONFIG
 
 random.seed(time.time())
 
@@ -15,8 +15,7 @@ class StockDataSet(object):
                  config=DEFAULT_CONFIG,
                  test_ratio=0.1,
                  normalized=True,
-                 close_price_only=True,
-                 **kwargs):
+                 close_price_only=True):
         self.stock_sym = stock_sym
         self.input_size = config.input_size
         self.num_steps = config.num_steps
