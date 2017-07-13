@@ -36,16 +36,15 @@ def build_lstm_graph_with_config(config=None):
             state_is_tuple=True
         ) if config.num_layers > 1 else _create_one_cell()
 
-        val, state_ = tf.nn.dynamic_rnn(cell, inputs, dtype=tf.float32, scope="lilian_rnn")
+        val, _ = tf.nn.dynamic_rnn(cell, inputs, dtype=tf.float32, scope="lilian_rnn")
 
-        # Check the shapes before and after .transpose()
-        print "Before transpose - val.get_shape() =", val.get_shape()
+        # Before transpose, val.get_shape() = (batch_size, num_steps, lstm_size)
+        # After transpose, val.get_shape() = (num_steps, batch_size, lstm_size)
         val = tf.transpose(val, [1, 0, 2])
-        print "After transpose - val.get_shape() =", val.get_shape()
 
         with tf.name_scope("output_layer"):
+            # last.get_shape() = (batch_size, lstm_size)
             last = tf.gather(val, int(val.get_shape()[0]) - 1, name="last_lstm_output")
-            print "last lstm output.get_shape() =", last.get_shape()
 
             weight = tf.Variable(tf.truncated_normal([config.lstm_size, config.input_size]), name="lilian_weights")
             bias = tf.Variable(tf.constant(0.1, shape=[config.input_size]), name="lilian_biases")
