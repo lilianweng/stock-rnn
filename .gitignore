@@ -1,5 +1,7 @@
 *.*~
 *.pyc
+*.ipynb_checkpoints
+*.ipynb_checkpoints/*
 _data/*.tsv
 _data/*.csv
 _logs/*/
