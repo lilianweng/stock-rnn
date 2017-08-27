@@ -5,3 +5,4 @@ _data/*.tsv
 _data/*.csv
 _logs/*/
 _models/*/
+.idea/
