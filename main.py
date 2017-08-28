@@ -4,6 +4,7 @@ import pprint
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
+from data_model import StockDataSet
 from model import LstmRNN
 
 flags = tf.app.flags
@@ -32,15 +33,8 @@ def show_all_variables():
 def main(_):
     pp.pprint(flags.FLAGS.__flags)
 
-    if FLAGS.input_width is None:
-        FLAGS.input_width = FLAGS.input_height
-    if FLAGS.output_width is None:
-        FLAGS.output_width = FLAGS.output_height
-
     if not os.path.exists(FLAGS.checkpoint_dir):
         os.makedirs(FLAGS.checkpoint_dir)
-    if not os.path.exists(FLAGS.sample_dir):
-        os.makedirs(FLAGS.sample_dir)
 
     # gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
     run_config = tf.ConfigProto()
@@ -59,8 +53,17 @@ def main(_):
 
         show_all_variables()
 
+        stock_data = StockDataSet(
+            "GOOG",
+            input_size=FLAGS.input_size,
+            num_steps=FLAGS.num_steps,
+            test_ratio=0.1,
+            close_price_only=True
+        )
+        print stock_data.info()
+
         if FLAGS.train:
-            rnn_model.train(FLAGS)
+            rnn_model.train(stock_data, FLAGS)
         else:
             if not rnn_model.load()[0]:
                 raise Exception("[!] Train a model first, then run test mode")

@@ -1,9 +1,9 @@
 class RNNConfig():
-    input_size=1
-    num_steps=30
-    lstm_size=128
-    num_layers=1
-    keep_prob=0.8
+    input_size = 1
+    num_steps = 30
+    lstm_size = 128
+    num_layers = 1
+    keep_prob = 0.8
 
     batch_size = 200
     init_learning_rate = 0.05
@@ -21,9 +21,10 @@ class RNNConfig():
     def __repr__(self):
         return str(self.to_dict())
 
+
 DEFAULT_CONFIG = RNNConfig()
 print "Default configuration:", DEFAULT_CONFIG.to_dict()
 
-DATA_DIR = "_data"
-LOG_DIR = "_logs"
-MODEL_DIR = "_models"
+DATA_DIR = "data"
+LOG_DIR = "logs"
+MODEL_DIR = "models"

@@ -79,7 +79,7 @@ class LstmRNN(object):
             self.pred_summ = tf.summary.histogram("pred", self.pred)
 
         # self.loss = -tf.reduce_sum(targets * tf.log(tf.clip_by_value(prediction, 1e-10, 1.0)))
-        self.loss = tf.reduce_mean(tf.square(self.pred - self.inputs), name="loss_mse")
+        self.loss = tf.reduce_mean(tf.square(self.pred - self.targets), name="loss_mse")
         self.optim = tf.train.AdamOptimizer(self.learning_rate).minimize(self.loss, name="adam_optim")
 
         self.loss_sum = tf.summary.scalar("loss_mse", self.loss)
@@ -100,9 +100,12 @@ class LstmRNN(object):
         self.writer = tf.summary.FileWriter(os.path.join("./logs", self.model_name))
         self.writer.add_graph(self.sess.graph)
 
-        step = 1
+        num_batches = int(len(dataset.train_X)) // config.batch_size
+        global_step = 1
 
-        for epoch in xrange(config.epoch):
+        for epoch in xrange(config.max_epoch):
+            epoch_step = 1
+
             learning_rate = config.init_learning_rate * (
                 config.learning_rate_decay ** max(float(epoch + 1 - config.init_epoch), 0.0)
             )
@@ -122,17 +125,19 @@ class LstmRNN(object):
                     self.learning_rate: learning_rate,
                 }
                 train_loss, _ = self.sess.run([self.loss, self.optim], train_data_feed)
-                step += 1
+                global_step += 1
+                epoch_step += 1
 
-                if np.mod(epoch, 10) == 0:
+                if np.mod(epoch, 20) == 0:
                     test_loss, _pred, _merged_sum = self.sess.run(
                         [self.loss, self.pred, self.merged_sum], test_data_feed)
                     assert len(_pred) == len(dataset.test_y)
-                    print "Epoch %d [%f]:" % (epoch, learning_rate), test_loss
-                    self.writer.add_summary(_merged_sum, global_step=epoch)
+                    print "Epoch %d [%d/%d][learning rate: %f]: %.6f" % (
+                        epoch, epoch_step, num_batches, learning_rate, test_loss)
+                    self.writer.add_summary(_merged_sum, global_step=global_step)
 
-                if np.mod(step, 100) == 2:
-                    self.save(self.checkpoint_dir, step)
+                if np.mod(global_step, 500) == 2:
+                    self.save(global_step)
 
         print "Final Results:"
         final_pred, final_loss = self.sess.run([self.pred, self.loss], test_data_feed)
@@ -169,3 +174,6 @@ class LstmRNN(object):
         else:
             print(" [*] Failed to find a checkpoint")
             return False, 0
+
+    def plot_samples(self):
+        pass
