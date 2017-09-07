@@ -41,7 +41,7 @@ class StockDataSet(object):
 
         if self.normalized:
             seq = [seq[0] / seq[0][0] - 1.0] + [
-                curr / seq[i - 1][-1] - 1.0 for i, curr in enumerate(seq[1:])]
+                curr / seq[i][-1] - 1.0 for i, curr in enumerate(seq[1:])]
 
         # split into groups of num_steps
         X = np.array([seq[i: i + self.num_steps] for i in range(len(seq) - self.num_steps)])
