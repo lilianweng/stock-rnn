@@ -5,5 +5,8 @@ data/*.tsv
 data/*.csv
 logs/*
 models/*
-checkpoint/*
+checkpoints/*
+images/*
 .idea/
+.ipynb_checkpoints/
+tmp_data/
