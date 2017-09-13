@@ -111,9 +111,10 @@ class LstmRNN(object):
 
         # self.loss = -tf.reduce_sum(targets * tf.log(tf.clip_by_value(prediction, 1e-10, 1.0)))
         self.loss = tf.reduce_mean(tf.square(self.pred - self.targets), name="loss_mse")
-        self.optim = tf.train.AdamOptimizer(self.learning_rate).minimize(self.loss, name="adam_optim")
+        self.optim = tf.train.RMSPropOptimizer(self.learning_rate).minimize(self.loss, name="rmsprop_optim")
 
         self.loss_sum = tf.summary.scalar("loss_mse", self.loss)
+        self.learning_rate_sum = tf.summary.scalar("learning_rate", self.learning_rate)
 
         self.t_vars = tf.trainable_variables()
         self.saver = tf.train.Saver()
@@ -215,7 +216,7 @@ class LstmRNN(object):
                         [self.loss, self.optim, self.merged_sum], train_data_feed)
                     self.writer.add_summary(train_merged_sum, global_step=global_step)
 
-                    if np.mod(global_step, len(dataset_list) * 100) == 1:
+                    if np.mod(global_step, len(dataset_list) * 500 / config.input_size) == 1:
                         test_loss, test_pred = self.sess.run([self.loss, self.pred], test_data_feed)
 
                         print "Step:%d [Epoch:%d] [Learning rate: %.6f] train_loss:%.6f test_loss:%.6f" % (
@@ -276,9 +277,9 @@ class LstmRNN(object):
         def _flatten(seq):
             return [x for y in seq for x in y]
 
-        truths = _flatten(targets)
-        preds = _flatten(preds)
-        days = range(len(truths))
+        truths = _flatten(targets)[-200:]
+        preds = _flatten(preds)[-200:]
+        days = range(len(truths))[-200:]
 
         plt.figure(figsize=(12, 6))
         plt.plot(days, truths, label='truth')
@@ -290,6 +291,7 @@ class LstmRNN(object):
         plt.grid(ls='--')
 
         if stock_sym:
-            plt.title(stock_sym + " | %d days in test" % len(truths))
+            plt.title(stock_sym + " | Last %d days in test" % len(truths))
 
         plt.savefig(figname, format='png', bbox_inches='tight', transparent=True)
+        plt.close()
