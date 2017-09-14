@@ -4,16 +4,17 @@ $ tensorboard --logdir ./_logs
 """
 import json
 import os
-import random
+import sys; sys.path.append("..")
 import tensorflow as tf
 
 from build_graph import build_lstm_graph_with_config
 from config import DEFAULT_CONFIG, MODEL_DIR
-from data_wrapper import StockDataSet
+from data_model import StockDataSet
 
 
-def load_data(stock_name, config=DEFAULT_CONFIG):
-    stock_dataset = StockDataSet(stock_name, config, test_ratio=0.1, close_price_only=True)
+def load_data(stock_name, input_size, num_steps):
+    stock_dataset = StockDataSet(stock_name, input_size=input_size, num_steps=num_steps,
+                                 test_ratio=0.1, close_price_only=True)
     print "Train data size:", len(stock_dataset.train_X)
     print "Test data size:", len(stock_dataset.test_X)
     return stock_dataset
@@ -34,7 +35,9 @@ def train_lstm_graph(stock_name, lstm_graph, config=DEFAULT_CONFIG):
     stock_name (str)
     lstm_graph (tf.Graph)
     """
-    stock_dataset = load_data(stock_name, config=config)
+    stock_dataset = load_data(stock_name,
+                              input_size=config.input_size,
+                              num_steps=config.num_steps)
 
     final_prediction = []
     final_loss = None
