@@ -35,7 +35,9 @@ def train_lstm_graph(stock_name, lstm_graph, config=DEFAULT_CONFIG):
     stock_name (str)
     lstm_graph (tf.Graph)
     """
-    stock_data = load_data(stock_name, input_size=config.input_size, num_steps=config.num_steps)
+    stock_dataset = load_data(stock_name,
+                              input_size=config.input_size,
+                              num_steps=config.num_steps)
 
     final_prediction = []
     final_loss = None
@@ -62,8 +64,8 @@ def train_lstm_graph(stock_name, lstm_graph, config=DEFAULT_CONFIG):
         learning_rate = graph.get_tensor_by_name('learning_rate:0')
 
         test_data_feed = {
-            inputs: stock_data.test_X,
-            targets: stock_data.test_y,
+            inputs: stock_dataset.test_X,
+            targets: stock_dataset.test_y,
             learning_rate: 0.0
         }
 
@@ -74,7 +76,7 @@ def train_lstm_graph(stock_name, lstm_graph, config=DEFAULT_CONFIG):
         for epoch_step in range(config.max_epoch):
             current_lr = learning_rates_to_use[epoch_step]
 
-            for batch_X, batch_y in stock_data.generate_one_epoch(config.batch_size):
+            for batch_X, batch_y in stock_dataset.generate_one_epoch(config.batch_size):
                 train_data_feed = {
                     inputs: batch_X,
                     targets: batch_y,
@@ -84,13 +86,13 @@ def train_lstm_graph(stock_name, lstm_graph, config=DEFAULT_CONFIG):
 
             if epoch_step % 10 == 0:
                 test_loss, _pred, _summary = sess.run([loss, prediction, merged_summary], test_data_feed)
-                assert len(_pred) == len(stock_data.test_y)
+                assert len(_pred) == len(stock_dataset.test_y)
                 print "Epoch %d [%f]:" % (epoch_step, current_lr), test_loss
                 if epoch_step % 50 == 0:
                     print "Predictions:", [(
-                                               map(lambda x: round(x, 4), _pred[-j]),
-                                               map(lambda x: round(x, 4), stock_data.test_y[-j])
-                                           ) for j in range(5)]
+                        map(lambda x: round(x, 4), _pred[-j]),
+                        map(lambda x: round(x, 4), stock_dataset.test_y[-j])
+                    ) for j in range(5)]
 
             writer.add_summary(_summary, global_step=epoch_step)
 
