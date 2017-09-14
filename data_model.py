@@ -4,8 +4,6 @@ import pandas as pd
 import random
 import time
 
-from config import DATA_DIR, DEFAULT_CONFIG
-
 random.seed(time.time())
 
 
@@ -25,7 +23,7 @@ class StockDataSet(object):
         self.normalized = normalized
 
         # Read csv file
-        raw_df = pd.read_csv(os.path.join(DATA_DIR, "%s.csv" % stock_sym))
+        raw_df = pd.read_csv(os.path.join("data", "%s.csv" % stock_sym))
 
         # Merge into one sequence
         if close_price_only:

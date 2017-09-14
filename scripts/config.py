@@ -5,11 +5,11 @@ class RNNConfig():
     num_layers = 1
     keep_prob = 0.8
 
-    batch_size = 200
-    init_learning_rate = 0.05
+    batch_size = 64
+    init_learning_rate = 0.001
     learning_rate_decay = 0.99
     init_epoch = 5
-    max_epoch = 500
+    max_epoch = 50
 
     def to_dict(self):
         dct = self.__class__.__dict__
