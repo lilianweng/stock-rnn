@@ -11,3 +11,12 @@ Such as:
 ```
 python main.py --stock_symbol=SP500 --train --input_size=5 --lstm_size=128 --max_epoch=50
 ```
+
+
+Install Conda https://conda.io/docs/installation.html
+Cheatsheet https://conda.io/docs/_downloads/conda-cheatsheet.pdf
+
+## Python 2.7
+conda create -n tensorflow-p2 python=2.7
+source activate tensorflow-p2
+conda install numpy pandas matplotlib tensorflow jupyter notebook scipy scikit-learn nb_conda  nltk
