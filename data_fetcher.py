@@ -1,5 +1,6 @@
 """
 Fetch the daily stock prices from Google Finance for stocks in S & P 500.
+@author: lilianweng
 """
 import os
 import pandas as pd
@@ -9,8 +10,8 @@ import urllib2
 
 from BeautifulSoup import BeautifulSoup
 from datetime import datetime
-from config import DATA_DIR
 
+DATA_DIR = "data"
 RANDOM_SLEEP_TIMES = (1, 5)
 
 # This repo "github.com/datasets/s-and-p-500-companies" has some other information about
