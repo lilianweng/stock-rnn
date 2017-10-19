@@ -8,9 +8,16 @@ Check my blog post **["Predict Stock Prices Using RNN: Part 1"](https://lilianwe
 4. Run `python main.py --help` to check the available command line args.
 5. Run `python main.py` to train the model.
 
-Such as:
+
+For examples,
+- Train a model only on SP500.csv; no embedding
 ```
 python main.py --stock_symbol=SP500 --train --input_size=5 --lstm_size=128 --max_epoch=50
+```
+
+- Train a model on 100 stocks; with embedding of size 8
+```
+python main.py --stock_count=10 --train --input_size=5 --lstm_size=128 --max_epoch=50 --embed_size=8
 ```
 
 My python environment:
@@ -23,5 +30,3 @@ scipy==0.19.1
 tensorflow==1.2.1
 urllib3==1.8
 ```
-
-- Lilian

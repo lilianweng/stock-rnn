@@ -22,9 +22,7 @@ flags.DEFINE_integer("init_epoch", 5, "Num. of epoches considered as early stage
 flags.DEFINE_integer("max_epoch", 50, "Total training epoches. [50]")
 flags.DEFINE_integer("embed_size", None, "If provided, use embedding vector of this size. [None]")
 flags.DEFINE_string("stock_symbol", None, "Target stock symbol [None]")
-flags.DEFINE_string("checkpoint_dir", "checkpoints", "Directory name to save the checkpoints [checkpoints]")
 flags.DEFINE_integer("sample_size", 4, "Number of stocks to plot during training. [4]")
-flags.DEFINE_string("plot_dir", "images", "Directory name to save plots [images]")
 flags.DEFINE_boolean("train", False, "True for training, False for testing [False]")
 
 FLAGS = flags.FLAGS
@@ -78,12 +76,6 @@ def load_sp500(input_size, num_steps, k=None, target_symbol=None, test_ratio=0.0
 def main(_):
     pp.pprint(flags.FLAGS.__flags)
 
-    if not os.path.exists(FLAGS.checkpoint_dir):
-        os.makedirs(FLAGS.checkpoint_dir)
-
-    if not os.path.exists(FLAGS.plot_dir):
-        os.makedirs(FLAGS.plot_dir)
-
     # gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
     run_config = tf.ConfigProto()
     run_config.gpu_options.allow_growth = True
@@ -98,7 +90,6 @@ def main(_):
             input_size=FLAGS.input_size,
             keep_prob=FLAGS.keep_prob,
             embed_size=FLAGS.embed_size,
-            checkpoint_dir=FLAGS.checkpoint_dir,
         )
 
         show_all_variables()

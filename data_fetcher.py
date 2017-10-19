@@ -2,6 +2,7 @@
 Fetch the daily stock prices from Google Finance for stocks in S & P 500.
 @author: lilianweng
 """
+import click
 import os
 import pandas as pd
 import random
@@ -40,7 +41,7 @@ def _load_symbols():
     return stock_symbols
 
 
-def fetch_prices(symbol):
+def fetch_prices(symbol, out_name):
     """
     Fetch daily stock prices for stock `symbol`, since 1980-01-01.
 
@@ -49,10 +50,6 @@ def fetch_prices(symbol):
 
     Returns: a bool, whether the fetch is succeeded.
     """
-    out_name = os.path.join(DATA_DIR, symbol + ".csv")
-    if os.path.exists(out_name):
-        return True
-
     # Format today's date to match Google's finance history api.
     now_datetime = datetime.now().strftime("%b+%d,+%Y")
 
@@ -72,10 +69,13 @@ def fetch_prices(symbol):
         print "Failed when fetching {}".format(symbol)
         return False
 
-    lines = open(out_name).readlines()
-    last_date = lines[2].split(',')[0]
-    first_date = lines[-2].split(',')[0]
-    print "%d lines [%s to %s]" % (len(lines) - 1, first_date, last_date)
+    data = pd.read_csv(out_name)
+    if data.empty:
+        print "Remove {} because the data set is empty.".format(out_name)
+        os.remove(out_name)
+    else:
+        dates = data.iloc[:,0].tolist()
+        print "# Fetched rows: %d [%s to %s]" % (data.shape[0], dates[-1], dates[0])
 
     # Take a rest
     sleep_time = random.randint(*RANDOM_SLEEP_TIMES)
@@ -84,15 +84,23 @@ def fetch_prices(symbol):
     return True
 
 
-def main():
+@click.command(help="Fetch stock prices data")
+@click.option('--continued', is_flag=True)
+def main(continued):
     random.seed(time.time())
     num_failure = 0
 
     # This is S&P 500 index
     #fetch_prices('INDEXSP%3A.INX')
+
     symbols = _load_symbols()
     for idx, sym in enumerate(symbols):
-        succeeded = fetch_prices(sym)
+        out_name = os.path.join(DATA_DIR, sym + ".csv")
+        if continued and os.path.exists(out_name):
+            print "Fetched", sym
+            continue
+
+        succeeded = fetch_prices(sym, out_name)
         num_failure += int(not succeeded)
 
         if idx % 10 == 0:

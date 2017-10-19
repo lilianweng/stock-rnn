@@ -1,8 +1,12 @@
+"""
+@author: lilianweng
+"""
+import numpy as np
 import os
 import random
 import re
+import shutil
 import time
-import numpy as np
 import tensorflow as tf
 
 import matplotlib.pyplot as plt
@@ -18,7 +22,8 @@ class LstmRNN(object):
                  input_size=1,
                  keep_prob=0.8,
                  embed_size=None,
-                 checkpoint_dir="checkpoints"):
+                 logs_dir="logs",
+                 plots_dir="images"):
         """
         Construct a RNN model using LSTM cell.
 
@@ -45,7 +50,8 @@ class LstmRNN(object):
         self.use_embed = (embed_size is not None) and (embed_size > 0)
         self.embed_size = embed_size or -1
 
-        self.checkpoint_dir = checkpoint_dir
+        self.logs_dir = logs_dir
+        self.plots_dir = plots_dir
 
         self.build_graph()
 
@@ -141,7 +147,9 @@ class LstmRNN(object):
             added_embed = projector_config.embeddings.add()
             added_embed.tensor_name = self.embed_matrix.name
             # Link this tensor to its metadata file (e.g. labels).
-            added_embed.metadata_path = os.path.join("logs", self.model_name, "metadata.tsv")
+            shutil.copyfile(os.path.join(self.logs_dir, "metadata.tsv"),
+                            os.path.join(self.model_logs_dir, "metadata.tsv"))
+            added_embed.metadata_path = "metadata.tsv"
 
             # The next line writes a projector_config.pbtxt in the LOG_DIR. TensorBoard will
             # read this file during startup.
@@ -190,10 +198,6 @@ class LstmRNN(object):
             sample_indices[sym] = target_indices
         print sample_indices
 
-        plot_dir = os.path.join(config.plot_dir, self.model_name)
-        if not os.path.exists(plot_dir):
-            os.mkdir(plot_dir)
-
         print "Start training for stocks:", [d.stock_sym for d in dataset_list]
         for epoch in xrange(config.max_epoch):
             epoch_step = 0
@@ -216,7 +220,7 @@ class LstmRNN(object):
                         [self.loss, self.optim, self.merged_sum], train_data_feed)
                     self.writer.add_summary(train_merged_sum, global_step=global_step)
 
-                    if np.mod(global_step, len(dataset_list) * 500 / config.input_size) == 1:
+                    if np.mod(global_step, len(dataset_list) * 100 / config.input_size) == 1:
                         test_loss, test_pred = self.sess.run([self.loss, self.pred], test_data_feed)
 
                         print "Step:%d [Epoch:%d] [Learning rate: %.6f] train_loss:%.6f test_loss:%.6f" % (
@@ -224,7 +228,7 @@ class LstmRNN(object):
 
                         # Plot samples
                         for sample_sym, indices in sample_indices.iteritems():
-                            image_path = os.path.join(plot_dir, "{}_epoch{:02d}_step{:04d}.png".format(
+                            image_path = os.path.join(self.model_plots_dir, "{}_epoch{:02d}_step{:04d}.png".format(
                                 sample_sym, epoch, epoch_step))
                             sample_preds = test_pred[indices]
                             sample_truth = merged_test_y[indices]
@@ -248,23 +252,34 @@ class LstmRNN(object):
 
         return name
 
+    @property
+    def model_logs_dir(self):
+        model_logs_dir = os.path.join(self.logs_dir, self.model_name)
+        if not os.path.exists(model_logs_dir):
+            os.makedirs(model_logs_dir)
+        return model_logs_dir
+
+    @property
+    def model_plots_dir(self):
+        model_plots_dir = os.path.join(self.plots_dir, self.model_name)
+        if not os.path.exists(model_plots_dir):
+            os.makedirs(model_plots_dir)
+        return model_plots_dir
+
     def save(self, step):
         model_name = self.model_name + ".model"
-        model_ckpt_dir = os.path.join(self.checkpoint_dir, self.model_name)
-
-        if not os.path.exists(model_ckpt_dir):
-            os.makedirs(model_ckpt_dir)
-
-        self.saver.save(self.sess, os.path.join(model_ckpt_dir, model_name), global_step=step)
+        self.saver.save(
+            self.sess,
+            os.path.join(self.model_logs_dir, model_name),
+            global_step=step
+        )
 
     def load(self):
         print(" [*] Reading checkpoints...")
-        model_ckpt_dir = os.path.join(self.checkpoint_dir, self.model_name)
-
-        ckpt = tf.train.get_checkpoint_state(model_ckpt_dir)
+        ckpt = tf.train.get_checkpoint_state(self.model_logs_dir)
         if ckpt and ckpt.model_checkpoint_path:
             ckpt_name = os.path.basename(ckpt.model_checkpoint_path)
-            self.saver.restore(self.sess, os.path.join(model_ckpt_dir, ckpt_name))
+            self.saver.restore(self.sess, os.path.join(self.model_logs_dir, ckpt_name))
             counter = int(next(re.finditer("(\d+)(?!.*\d)", ckpt_name)).group(0))
             print(" [*] Success to read {}".format(ckpt_name))
             return True, counter
