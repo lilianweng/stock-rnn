@@ -17,7 +17,7 @@ python main.py --stock_symbol=SP500 --train --input_size=5 --lstm_size=128 --max
 
 - Train a model on 100 stocks; with embedding of size 8
 ```
-python main.py --stock_count=10 --train --input_size=5 --lstm_size=128 --max_epoch=50 --embed_size=8
+python main.py --stock_count=100 --train --input_size=5 --lstm_size=128 --max_epoch=50 --embed_size=8
 ```
 
 My python environment:
