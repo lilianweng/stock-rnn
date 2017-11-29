@@ -1,6 +1,6 @@
 ### Predict stock market prices using RNN
 
-Check my blog post **["Predict Stock Prices Using RNN: Part 1"](https://lilianweng.github.io/lil-log/2017/07/08/predict-stock-prices-using-RNN.html)** for the tutorial associated.
+Check my blog post **["Predict Stock Prices Using RNN: Part 1"](https://lilianweng.github.io/lil-log/2017/07/08/predict-stock-prices-using-RNN-part-1.html)** for the tutorial associated.
 
 1. Make sure `tensorflow` has been installed.
 2. First download the full S&P 500 data from [Yahoo! Finance ^GSPC](https://finance.yahoo.com/quote/%5EGSPC?p=^GSPC) (click the "Historical Data" tab and select the max time period). And save the .csv file to `data/SP500.csv`.
