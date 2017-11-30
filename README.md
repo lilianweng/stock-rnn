@@ -13,12 +13,12 @@ Check my blog post **["Predict Stock Prices Using RNN: Part 1"](https://lilianwe
 For examples,
 - Train a model only on SP500.csv; no embedding
 ```
-python main.py --stock_symbol=SP500 --train --input_size=5 --lstm_size=128 --max_epoch=50
+python main.py --stock_symbol=SP500 --train --input_size=1 --lstm_size=128 --max_epoch=50
 ```
 
 - Train a model on 100 stocks; with embedding of size 8
 ```
-python main.py --stock_count=100 --train --input_size=5 --lstm_size=128 --max_epoch=50 --embed_size=8
+python main.py --stock_count=100 --train --input_size=1 --lstm_size=128 --max_epoch=50 --embed_size=8
 ```
 
 My python environment:
