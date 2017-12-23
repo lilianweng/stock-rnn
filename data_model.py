@@ -6,7 +6,7 @@ import time
 
 random.seed(time.time())
 
-
+#test_ratio:split train and test
 class StockDataSet(object):
     def __init__(self,
                  stock_sym,
@@ -42,7 +42,6 @@ class StockDataSet(object):
         # split into items of input_size
         seq = [np.array(seq[i * self.input_size: (i + 1) * self.input_size])
                for i in range(len(seq) // self.input_size)]
-
         if self.normalized:
             seq = [seq[0] / seq[0][0] - 1.0] + [
                 curr / seq[i][-1] - 1.0 for i, curr in enumerate(seq[1:])]

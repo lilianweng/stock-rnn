@@ -21,7 +21,6 @@ class LstmRNN(object):
                  num_steps=30,
                  input_size=1,
                  keep_prob=0.8,
-                 embed_size=None,
                  logs_dir="logs",
                  plots_dir="images"):
         """
@@ -35,7 +34,6 @@ class LstmRNN(object):
             num_steps:
             input_size:
             keep_prob:
-            embed_size
             checkpoint_dir
         """
         self.sess = sess
@@ -46,10 +44,6 @@ class LstmRNN(object):
         self.num_steps = num_steps
         self.input_size = input_size
         self.keep_prob = keep_prob
-
-        self.use_embed = (embed_size is not None) and (embed_size > 0)
-        self.embed_size = embed_size or -1
-
         self.logs_dir = logs_dir
         self.plots_dir = plots_dir
 
@@ -82,21 +76,6 @@ class LstmRNN(object):
             state_is_tuple=True
         ) if self.num_layers > 1 else _create_one_cell()
 
-        if self.embed_size > 0:
-            self.embed_matrix = tf.Variable(
-                tf.random_uniform([self.stock_count, self.embed_size], -1.0, 1.0),
-                name="embed_matrix"
-            )
-            sym_embeds = tf.nn.embedding_lookup(self.embed_matrix, self.symbols)
-            
-            # stock_label_embeds.shape = (batch_size, embedding_size)
-            stacked_symbols = tf.tile(self.symbols, [1, self.num_steps], name='stacked_stock_labels')
-            stacked_embeds = tf.nn.embedding_lookup(self.embed_matrix, stacked_symbols)
-
-            # After concat, inputs.shape = (batch_size, num_steps, lstm_size + embed_size)
-            self.inputs_with_embed = tf.concat([self.inputs, stacked_embeds], axis=2, name="inputs_with_embed")
-        else:
-            self.inputs_with_embed = tf.identity(self.inputs)
 
         # Run dynamic RNN
         val, state_ = tf.nn.dynamic_rnn(cell, self.inputs, dtype=tf.float32, scope="dynamic_rnn")
@@ -137,24 +116,6 @@ class LstmRNN(object):
         # Set up the logs folder
         self.writer = tf.summary.FileWriter(os.path.join("./logs", self.model_name))
         self.writer.add_graph(self.sess.graph)
-
-        if self.use_embed:
-            # Set up embedding visualization
-            # Format: tensorflow/tensorboard/plugins/projector/projector_config.proto
-            projector_config = projector.ProjectorConfig()
-
-            # You can add multiple embeddings. Here we add only one.
-            added_embed = projector_config.embeddings.add()
-            added_embed.tensor_name = self.embed_matrix.name
-            # Link this tensor to its metadata file (e.g. labels).
-            shutil.copyfile(os.path.join(self.logs_dir, "metadata.tsv"),
-                            os.path.join(self.model_logs_dir, "metadata.tsv"))
-            added_embed.metadata_path = "metadata.tsv"
-
-            # The next line writes a projector_config.pbtxt in the LOG_DIR. TensorBoard will
-            # read this file during startup.
-            projector.visualize_embeddings(self.writer, projector_config)
-
         tf.global_variables_initializer().run()
 
         # Merged test data of different stocks.
@@ -246,9 +207,6 @@ class LstmRNN(object):
     def model_name(self):
         name = "stock_rnn_lstm%d_step%d_input%d" % (
             self.lstm_size, self.num_steps, self.input_size)
-
-        if self.embed_size > 0:
-            name += "_embed%d" % self.embed_size
 
         return name
 
