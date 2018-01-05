@@ -171,9 +171,9 @@ class LstmRNN(object):
         merged_test_y = np.array(merged_test_y)
         merged_test_labels = np.array(merged_test_labels)
 
-        print "len(merged_test_X) =", len(merged_test_X)
-        print "len(merged_test_y) =", len(merged_test_y)
-        print "len(merged_test_labels) =", len(merged_test_labels)
+        print("len(merged_test_X) =", len(merged_test_X))
+        print("len(merged_test_y) =", len(merged_test_y))
+        print("len(merged_test_labels) =", len(merged_test_labels))
 
         test_data_feed = {
             self.learning_rate: 0.0,
@@ -196,10 +196,10 @@ class LstmRNN(object):
                 i for i, sym_label in enumerate(merged_test_labels)
                 if sym_label[0] == l])
             sample_indices[sym] = target_indices
-        print sample_indices
+        print(sample_indices)
 
-        print "Start training for stocks:", [d.stock_sym for d in dataset_list]
-        for epoch in xrange(config.max_epoch):
+        print("Start training for stocks:", [d.stock_sym for d in dataset_list])
+        for epoch in range(config.max_epoch):
             epoch_step = 0
             learning_rate = config.init_learning_rate * (
                 config.learning_rate_decay ** max(float(epoch + 1 - config.init_epoch), 0.0)
@@ -223,8 +223,8 @@ class LstmRNN(object):
                     if np.mod(global_step, len(dataset_list) * 100 / config.input_size) == 1:
                         test_loss, test_pred = self.sess.run([self.loss, self.pred], test_data_feed)
 
-                        print "Step:%d [Epoch:%d] [Learning rate: %.6f] train_loss:%.6f test_loss:%.6f" % (
-                            global_step, epoch, learning_rate, train_loss, test_loss)
+                        print("Step:%d [Epoch:%d] [Learning rate: %.6f] train_loss:%.6f test_loss:%.6f" % (
+                            global_step, epoch, learning_rate, train_loss, test_loss))
 
                         # Plot samples
                         for sample_sym, indices in sample_indices.iteritems():
