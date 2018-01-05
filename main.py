@@ -52,15 +52,15 @@ def load_sp500(input_size, num_steps, k=None, target_symbol=None, test_ratio=0.0
     info = pd.read_csv("data/constituents-financials.csv")
     info = info.rename(columns={col: col.lower().replace(' ', '_') for col in info.columns})
     info['file_exists'] = info['symbol'].map(lambda x: os.path.exists("data/{}.csv".format(x)))
-    print info['file_exists'].value_counts().to_dict()
+    print(info['file_exists'].value_counts().to_dict())
 
     info = info[info['file_exists'] == True].reset_index(drop=True)
-    info = info.sort('market_cap', ascending=False).reset_index(drop=True)
+    info = info.sort_values('market_cap', ascending=False).reset_index(drop=True)
 
     if k is not None:
         info = info.head(k)
 
-    print "Head of S&P 500 info:\n", info.head()
+    print("Head of S&P 500 info:\n", info.head())
 
     # Generate embedding meta file
     info[['symbol', 'sector']].to_csv(os.path.join("logs/metadata.tsv"), sep='\t', index=False)
