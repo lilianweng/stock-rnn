@@ -87,19 +87,24 @@ class LstmRNN(object):
                 tf.random_uniform([self.stock_count, self.embed_size], -1.0, 1.0),
                 name="embed_matrix"
             )
-            sym_embeds = tf.nn.embedding_lookup(self.embed_matrix, self.symbols)
             
             # stock_label_embeds.shape = (batch_size, embedding_size)
             stacked_symbols = tf.tile(self.symbols, [1, self.num_steps], name='stacked_stock_labels')
             stacked_embeds = tf.nn.embedding_lookup(self.embed_matrix, stacked_symbols)
 
-            # After concat, inputs.shape = (batch_size, num_steps, lstm_size + embed_size)
+            # After concat, inputs.shape = (batch_size, num_steps, input_size + embed_size)
             self.inputs_with_embed = tf.concat([self.inputs, stacked_embeds], axis=2, name="inputs_with_embed")
+            self.embed_matrix_summ = tf.summary.histogram("embed_matrix", self.embed_matrix)
+
         else:
             self.inputs_with_embed = tf.identity(self.inputs)
+            self.embed_matrix_summ = None
+
+        print "inputs.shape:", self.inputs.shape
+        print "inputs_with_embed.shape:", self.inputs_with_embed.shape
 
         # Run dynamic RNN
-        val, state_ = tf.nn.dynamic_rnn(cell, self.inputs, dtype=tf.float32, scope="dynamic_rnn")
+        val, state_ = tf.nn.dynamic_rnn(cell, self.inputs_with_embed, dtype=tf.float32, scope="dynamic_rnn")
 
         # Before transpose, val.get_shape() = (batch_size, num_steps, lstm_size)
         # After transpose, val.get_shape() = (num_steps, batch_size, lstm_size)
