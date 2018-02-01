@@ -53,7 +53,7 @@ def fetch_prices(symbol, out_name):
     # Format today's date to match Google's finance history api.
     now_datetime = datetime.now().strftime("%b+%d,+%Y")
 
-    BASE_URL = "https://www.google.com/finance/historical?output=csv&q={0}&startdate=Jan+1%2C+1980&enddate={1}"
+    BASE_URL = "https://finance.google.com/finance/historical?output=csv&q={0}&startdate=Jan+1%2C+1980&enddate={1}"
     symbol_url = BASE_URL.format(
         urllib2.quote(symbol),
         urllib2.quote(now_datetime, '+')
