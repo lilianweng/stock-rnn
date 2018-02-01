@@ -225,7 +225,7 @@ class LstmRNN(object):
                         [self.loss, self.optim, self.merged_sum], train_data_feed)
                     self.writer.add_summary(train_merged_sum, global_step=global_step)
 
-                    if np.mod(global_step, len(dataset_list) * 100 / config.input_size) == 1:
+                    if np.mod(global_step, len(dataset_list) * 200 / config.input_size) == 1:
                         test_loss, test_pred = self.sess.run([self.loss, self.pred], test_data_feed)
 
                         print "Step:%d [Epoch:%d] [Learning rate: %.6f] train_loss:%.6f test_loss:%.6f" % (
@@ -293,12 +293,12 @@ class LstmRNN(object):
             print(" [*] Failed to find a checkpoint")
             return False, 0
 
-    def plot_samples(self, preds, targets, figname, stock_sym=None):
+    def plot_samples(self, preds, targets, figname, stock_sym=None, multiplier=5):
         def _flatten(seq):
-            return [x for y in seq for x in y]
+            return np.array([x for y in seq for x in y])
 
         truths = _flatten(targets)[-200:]
-        preds = _flatten(preds)[-200:]
+        preds = (_flatten(preds) * multiplier)[-200:]
         days = range(len(truths))[-200:]
 
         plt.figure(figsize=(12, 6))
