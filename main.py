@@ -88,7 +88,6 @@ def main(_):
             num_layers=FLAGS.num_layers,
             num_steps=FLAGS.num_steps,
             input_size=FLAGS.input_size,
-            keep_prob=FLAGS.keep_prob,
             embed_size=FLAGS.embed_size,
         )
 
