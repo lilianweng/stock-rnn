@@ -61,7 +61,7 @@ class StockDataSet(object):
         if batch_size * num_batches < len(self.train_X):
             num_batches += 1
 
-        batch_indices = range(num_batches)
+        batch_indices = list(range(num_batches))
         random.shuffle(batch_indices)
         for j in batch_indices:
             batch_X = self.train_X[j * batch_size: (j + 1) * batch_size]

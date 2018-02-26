@@ -87,7 +87,7 @@ class LstmRNN(object):
                 tf.random_uniform([self.stock_count, self.embed_size], -1.0, 1.0),
                 name="embed_matrix"
             )
-            
+
             # stock_label_embeds.shape = (batch_size, embedding_size)
             stacked_symbols = tf.tile(self.symbols, [1, self.num_steps], name='stacked_stock_labels')
             stacked_embeds = tf.nn.embedding_lookup(self.embed_matrix, stacked_symbols)
@@ -100,8 +100,8 @@ class LstmRNN(object):
             self.inputs_with_embed = tf.identity(self.inputs)
             self.embed_matrix_summ = None
 
-        print "inputs.shape:", self.inputs.shape
-        print "inputs_with_embed.shape:", self.inputs_with_embed.shape
+        print( "inputs.shape:", self.inputs.shape)
+        print( "inputs_with_embed.shape:", self.inputs_with_embed.shape)
 
         # Run dynamic RNN
         val, state_ = tf.nn.dynamic_rnn(cell, self.inputs_with_embed, dtype=tf.float32, scope="dynamic_rnn")
@@ -180,9 +180,9 @@ class LstmRNN(object):
         merged_test_y = np.array(merged_test_y)
         merged_test_labels = np.array(merged_test_labels)
 
-        print "len(merged_test_X) =", len(merged_test_X)
-        print "len(merged_test_y) =", len(merged_test_y)
-        print "len(merged_test_labels) =", len(merged_test_labels)
+        print( "len(merged_test_X) =", len(merged_test_X))
+        print( "len(merged_test_y) =", len(merged_test_y))
+        print( "len(merged_test_labels) =", len(merged_test_labels))
 
         test_data_feed = {
             self.learning_rate: 0.0,
@@ -206,10 +206,10 @@ class LstmRNN(object):
                 i for i, sym_label in enumerate(merged_test_labels)
                 if sym_label[0] == l])
             sample_indices[sym] = target_indices
-        print sample_indices
+        print( sample_indices)
 
-        print "Start training for stocks:", [d.stock_sym for d in dataset_list]
-        for epoch in xrange(config.max_epoch):
+        print( "Start training for stocks:", [d.stock_sym for d in dataset_list])
+        for epoch in list(range(config.max_epoch)):
             epoch_step = 0
             learning_rate = config.init_learning_rate * (
                 config.learning_rate_decay ** max(float(epoch + 1 - config.init_epoch), 0.0)
@@ -234,11 +234,11 @@ class LstmRNN(object):
                     if np.mod(global_step, len(dataset_list) * 200 / config.input_size) == 1:
                         test_loss, test_pred = self.sess.run([self.loss_test, self.pred], test_data_feed)
 
-                        print "Step:%d [Epoch:%d] [Learning rate: %.6f] train_loss:%.6f test_loss:%.6f" % (
-                            global_step, epoch, learning_rate, train_loss, test_loss)
+                        print( "Step:%d [Epoch:%d] [Learning rate: %.6f] train_loss:%.6f test_loss:%.6f" % (
+                            global_step, epoch, learning_rate, train_loss, test_loss))
 
                         # Plot samples
-                        for sample_sym, indices in sample_indices.iteritems():
+                        for sample_sym, indices in sample_indices.items():
                             image_path = os.path.join(self.model_plots_dir, "{}_epoch{:02d}_step{:04d}.png".format(
                                 sample_sym, epoch, epoch_step))
                             sample_preds = test_pred[indices]
