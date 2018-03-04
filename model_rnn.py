@@ -110,11 +110,13 @@ class LstmRNN(object):
         # After transpose, val.get_shape() = (num_steps, batch_size, lstm_size)
         val = tf.transpose(val, [1, 0, 2])
 
-        last = tf.gather(val, int(val.get_shape()[0]) - 1, name="lstm_state")
+        last = tf.gather(val, int(val.get_shape()[0]) - 1, name="lstm_state")#取出最后一个输出值
         ws = tf.Variable(tf.truncated_normal([self.lstm_size, self.input_size]), name="w")
         bias = tf.Variable(tf.constant(0.1, shape=[self.input_size]), name="b")
         self.pred = tf.matmul(last, ws) + bias
-
+        '''
+        为tensorboard准备数据
+        '''
         self.last_sum = tf.summary.histogram("lstm_state", last)
         self.w_sum = tf.summary.histogram("w", ws)
         self.b_sum = tf.summary.histogram("b", bias)
@@ -193,7 +195,7 @@ class LstmRNN(object):
         }
 
         global_step = 0
-
+        #注：这里的num_batches应该覆盖所有stock_symbol的股票样本
         num_batches = sum(len(d_.train_X) for d_ in dataset_list) // config.batch_size
         random.seed(time.time())
 
@@ -213,7 +215,7 @@ class LstmRNN(object):
             epoch_step = 0
             learning_rate = config.init_learning_rate * (
                 config.learning_rate_decay ** max(float(epoch + 1 - config.init_epoch), 0.0)
-            )
+            )#早起的epoch（默认为5）之内，不对学习率进行衰减
 
             for label_, d_ in enumerate(dataset_list):
                 for batch_X, batch_y in d_.generate_one_epoch(config.batch_size):
@@ -230,7 +232,7 @@ class LstmRNN(object):
                     train_loss, _, train_merged_sum = self.sess.run(
                         [self.loss, self.optim, self.merged_sum], train_data_feed)
                     self.writer.add_summary(train_merged_sum, global_step=global_step)
-
+                    #全局训练次数（global_step)大于200时，开始测试
                     if np.mod(global_step, len(dataset_list) * 200 / config.input_size) == 1:
                         test_loss, test_pred = self.sess.run([self.loss_test, self.pred], test_data_feed)
 

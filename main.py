@@ -1,3 +1,7 @@
+# In[]
+'''
+导入package
+'''
 import os
 import pandas as pd
 import pprint
@@ -7,7 +11,10 @@ import tensorflow.contrib.slim as slim
 
 from data_model import StockDataSet
 from model_rnn import LstmRNN
-
+# In[]
+'''
+命令行参数定义
+'''
 flags = tf.app.flags
 flags.DEFINE_integer("stock_count", 100, "Stock count [100]")
 flags.DEFINE_integer("input_size", 1, "Input size [1]")
@@ -24,11 +31,15 @@ flags.DEFINE_integer("embed_size", None, "If provided, use embedding vector of t
 flags.DEFINE_string("stock_symbol", None, "Target stock symbol [None]")
 flags.DEFINE_integer("sample_size", 4, "Number of stocks to plot during training. [4]")
 flags.DEFINE_boolean("train", True, "True for training, False for testing [False]")
+# In[]
 
 FLAGS = flags.FLAGS
 
 pp = pprint.PrettyPrinter()
-
+# In[]
+'''
+创建日志文件夹
+'''
 if not os.path.exists("logs"):
     os.mkdir("logs")
 
@@ -40,7 +51,7 @@ def show_all_variables():
 
 def load_sp500(input_size, num_steps, k=None, target_symbol=None, test_ratio=0.05):
     if target_symbol is not None:
-        return [
+        return [#注意此时返回的是一个list，长度为1
             StockDataSet(
                 target_symbol,
                 input_size=input_size,
@@ -72,10 +83,11 @@ def load_sp500(input_size, num_steps, k=None, target_symbol=None, test_ratio=0.0
                      test_ratio=0.05)
         for _, row in info.iterrows()]
 
-
+# In[]
 def main(_):
+    # In[]
     pp.pprint(flags.FLAGS.__flags)
-
+    # In[]
     # gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
     run_config = tf.ConfigProto()
     run_config.gpu_options.allow_growth = True
