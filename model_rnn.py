@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 @author: lilianweng
 """
@@ -114,6 +115,8 @@ class LstmRNN(object):
         print('last.shape:',last.shape)
         ws = tf.Variable(tf.truncated_normal([self.lstm_size, self.input_size]), name="w")
         bias = tf.Variable(tf.constant(0.1, shape=[self.input_size]), name="b")
+        print('ws.shape:',ws.shape)
+        print('bias.shape:',bias.shape)
         self.pred = tf.matmul(last, ws) + bias
         print('self.pred.shape:',self.pred.shape)
         '''
