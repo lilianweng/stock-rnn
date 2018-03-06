@@ -21,7 +21,7 @@ class LstmRNN(object):
                  num_steps=30,
                  input_size=1,
                  embed_size=None,
-                 logs_dir="logs",
+                 logs_dir="logs1",
                  plots_dir="images"):
         """
         Construct a RNN model using LSTM cell.
@@ -111,9 +111,11 @@ class LstmRNN(object):
         val = tf.transpose(val, [1, 0, 2])
 
         last = tf.gather(val, int(val.get_shape()[0]) - 1, name="lstm_state")#取出最后一个输出值
+        print('last.shape:',last.shape)
         ws = tf.Variable(tf.truncated_normal([self.lstm_size, self.input_size]), name="w")
         bias = tf.Variable(tf.constant(0.1, shape=[self.input_size]), name="b")
         self.pred = tf.matmul(last, ws) + bias
+        print('self.pred.shape:',self.pred.shape)
         '''
         为tensorboard准备数据
         '''
@@ -146,7 +148,7 @@ class LstmRNN(object):
         self.merged_sum = tf.summary.merge_all()
 
         # Set up the logs folder
-        self.writer = tf.summary.FileWriter(os.path.join("./logs", self.model_name))
+        self.writer = tf.summary.FileWriter(os.path.join("./logs1", self.model_name))
         self.writer.add_graph(self.sess.graph)
 
         if self.use_embed:

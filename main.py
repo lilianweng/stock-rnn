@@ -40,8 +40,8 @@ pp = pprint.PrettyPrinter()
 '''
 创建日志文件夹
 '''
-if not os.path.exists("logs"):
-    os.mkdir("logs")
+if not os.path.exists("logs1"):
+    os.mkdir("logs1")
 
 
 def show_all_variables():
@@ -74,7 +74,7 @@ def load_sp500(input_size, num_steps, k=None, target_symbol=None, test_ratio=0.0
     print( "Head of S&P 500 info:\n", info.head())
 
     # Generate embedding meta file
-    info[['symbol', 'sector']].to_csv(os.path.join("logs/metadata.tsv"), sep='\t', index=False)
+    info[['symbol', 'sector']].to_csv(os.path.join("logs1/metadata.tsv"), sep='\t', index=False)
 
     return [
         StockDataSet(row['symbol'],
