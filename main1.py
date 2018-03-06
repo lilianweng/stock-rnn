@@ -109,6 +109,7 @@ with tf.Session(config=run_config) as sess:
             )
 # In[]
     show_all_variables()
+
 # In[]
     stock_data_list = load_sp500(
             FLAGS.input_size,
@@ -130,6 +131,10 @@ with tf.Session(config=run_config) as sess:
     merged_test_X = np.array(merged_test_X)
     merged_test_y = np.array(merged_test_y)
     merged_test_labels = np.array(merged_test_labels)
+    # In[]
+    a=len(dataset_list[0].train_X)
+    b=np.array([[1,2,3],[4,5,6]])
+    c=len(b)
     # In[]
     '''
     注：这里的num_batches应该覆盖所有stock_symbol的股票样本
@@ -168,23 +173,3 @@ with tf.Session(config=run_config) as sess:
                         FLAGS.targets: batch_y,
                         FLAGS.symbols: batch_labels,
                         }
-                        # In[]
-                train_loss, _, train_merged_sum = self.sess.run(
-                            [self.loss, self.optim, self.merged_sum], train_data_feed)
-                self.writer.add_summary(train_merged_sum, global_step=global_step)
-
-                if np.mod(global_step, len(dataset_list) * 200 / config.input_size) == 1:
-                    test_loss, test_pred = self.sess.run([self.loss_test, self.pred], test_data_feed)
-
-                    print( "Step:%d [Epoch:%d] [Learning rate: %.6f] train_loss:%.6f test_loss:%.6f" % (
-                            global_step, epoch, learning_rate, train_loss, test_loss))
-
-                    # Plot samples
-                    for sample_sym, indices in sample_indices.items():
-                        image_path = os.path.join(self.model_plots_dir, "{}_epoch{:02d}_step{:04d}.png".format(
-                            sample_sym, epoch, epoch_step))
-                        sample_preds = test_pred[indices]
-                        sample_truth = merged_test_y[indices]
-                        self.plot_samples(sample_preds, sample_truth, image_path, stock_sym=sample_sym)
-
-                    self.save(global_step)

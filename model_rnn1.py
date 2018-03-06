@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 @author: lilianweng
 """
@@ -101,7 +100,7 @@ class LstmRNN(object):
             self.inputs_with_embed = tf.identity(self.inputs)
             self.embed_matrix_summ = None
 
-        print( "inputs.shape:", self.inputs.shape)#inputs.shape: (bath_size, 30, 1)
+        print( "inputs.shape:", self.inputs.shape)#inputs.shape: (?, 30, 1)
         print( "inputs_with_embed.shape:", self.inputs_with_embed.shape)
 
         # Run dynamic RNN
@@ -115,8 +114,6 @@ class LstmRNN(object):
         print('last.shape:',last.shape)#last.shape: (batch_size, 128)
         ws = tf.Variable(tf.truncated_normal([self.lstm_size, self.input_size]), name="w")
         bias = tf.Variable(tf.constant(0.1, shape=[self.input_size]), name="b")
-        print('ws.shape:',ws.shape)
-        print('bias.shape:',bias.shape)
         self.pred = tf.matmul(last, ws) + bias
         print('self.pred.shape:',self.pred.shape)
         '''
