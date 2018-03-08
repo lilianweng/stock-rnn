@@ -92,7 +92,7 @@ def main(_):
     # gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
     run_config = tf.ConfigProto()
     run_config.gpu_options.allow_growth = True
-
+    #print("run_config.batch_size:",run_config.batch_size)
     with tf.Session(config=run_config) as sess:
         rnn_model = LstmRNN(
             sess,
