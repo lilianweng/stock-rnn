@@ -149,7 +149,7 @@ class LstmRNN(object):
         """
         assert len(dataset_list) > 0
         self.merged_sum = tf.summary.merge_all()
-
+        print("config.batch_size:",config.batch_size)
         # Set up the logs folder
         self.writer = tf.summary.FileWriter(os.path.join("./logs1", self.model_name))
         self.writer.add_graph(self.sess.graph)
