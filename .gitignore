@@ -10,3 +10,4 @@ images/*
 .idea/
 .ipynb_checkpoints/
 tmp_data/
+logs1/*

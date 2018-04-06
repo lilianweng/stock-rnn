@@ -1,0 +1,2 @@
+model_checkpoint_path: "stock_rnn_lstm128_step30_input1.model-1"
+all_model_checkpoint_paths: "stock_rnn_lstm128_step30_input1.model-1"

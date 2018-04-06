@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+"""
+Created on Sat Mar  3 16:45:29 2018
+
+@author: lankuohsing
+"""
+
 import numpy as np
 import os
 import pandas as pd
@@ -72,4 +78,4 @@ class StockDataSet(object):
             batch_X = self.train_X[j * batch_size: (j + 1) * batch_size]
             batch_y = self.train_y[j * batch_size: (j + 1) * batch_size]
             assert set(map(len, batch_X)) == {self.num_steps}
-            yield batch_X, batch_y#这样在一个epoch内，取出的batches可以刚好自动覆盖完所有的数据集
+            yield batch_X, batch_y
