@@ -38,13 +38,14 @@ def show_all_variables():
     slim.model_analyzer.analyze_vars(model_vars, print_info=True)
 
 
-def load_sp500(input_size, num_steps, k=None, target_symbol=None, test_ratio=0.05):
+def load_sp500(input_size, num_steps, batch_size, k=None, target_symbol=None, test_ratio=0.05):
     if target_symbol is not None:
         return [
             StockDataSet(
                 target_symbol,
                 input_size=input_size,
                 num_steps=num_steps,
+                batch_size=batch_size,
                 test_ratio=test_ratio)
         ]
 
@@ -52,7 +53,7 @@ def load_sp500(input_size, num_steps, k=None, target_symbol=None, test_ratio=0.0
     info = pd.read_csv("data/constituents-financials.csv")
     info = info.rename(columns={col: col.lower().replace(' ', '_') for col in info.columns})
     info['file_exists'] = info['symbol'].map(lambda x: os.path.exists("data/{}.csv".format(x)))
-    print info['file_exists'].value_counts().to_dict()
+    print(info['file_exists'].value_counts().to_dict())
 
     info = info[info['file_exists'] == True].reset_index(drop=True)
     info = info.sort('market_cap', ascending=False).reset_index(drop=True)
@@ -60,7 +61,7 @@ def load_sp500(input_size, num_steps, k=None, target_symbol=None, test_ratio=0.0
     if k is not None:
         info = info.head(k)
 
-    print "Head of S&P 500 info:\n", info.head()
+    print("Head of S&P 500 info:\n", info.head())
 
     # Generate embedding meta file
     info[['symbol', 'sector']].to_csv(os.path.join("logs/metadata.tsv"), sep='\t', index=False)
@@ -69,6 +70,7 @@ def load_sp500(input_size, num_steps, k=None, target_symbol=None, test_ratio=0.0
         StockDataSet(row['symbol'],
                      input_size=input_size,
                      num_steps=num_steps,
+                     batch_size=batch_size,
                      test_ratio=0.05)
         for _, row in info.iterrows()]
 
@@ -96,6 +98,7 @@ def main(_):
         stock_data_list = load_sp500(
             FLAGS.input_size,
             FLAGS.num_steps,
+            FLAGS.batch_size,
             k=FLAGS.stock_count,
             target_symbol=FLAGS.stock_symbol,
         )

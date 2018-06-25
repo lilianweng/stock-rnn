@@ -7,17 +7,19 @@ import time
 random.seed(time.time())
 
 
-class StockDataSet(object):
+class StockDataSet():
     def __init__(self,
                  stock_sym,
                  input_size=1,
                  num_steps=30,
+                 batch_size=64,
                  test_ratio=0.1,
                  normalized=True,
                  close_price_only=True):
         self.stock_sym = stock_sym
         self.input_size = input_size
         self.num_steps = num_steps
+        self.batch_size = batch_size
         self.test_ratio = test_ratio
         self.close_price_only = close_price_only
         self.normalized = normalized
@@ -48,22 +50,21 @@ class StockDataSet(object):
                 curr / seq[i][-1] - 1.0 for i, curr in enumerate(seq[1:])]
 
         # split into groups of num_steps
-        X = np.array([seq[i: i + self.num_steps] for i in range(len(seq) - self.num_steps)])
-        y = np.array([seq[i + self.num_steps] for i in range(len(seq) - self.num_steps)])
+        self.X_y = np.array([seq[i: i + self.num_steps+1] for i in range(len(seq) - self.num_steps)])
+        X = self.X_y[:, :30, :]
+        y = self.X_y[:, 30, :]
 
         train_size = int(len(X) * (1.0 - self.test_ratio))
+        train_size -= train_size % self.batch_size
         train_X, test_X = X[:train_size], X[train_size:]
         train_y, test_y = y[:train_size], y[train_size:]
         return train_X, train_y, test_X, test_y
 
     def generate_one_epoch(self, batch_size):
         num_batches = int(len(self.train_X)) // batch_size
-        if batch_size * num_batches < len(self.train_X):
-            num_batches += 1
 
-        batch_indices = range(num_batches)
-        random.shuffle(batch_indices)
-        for j in batch_indices:
+        np.random.shuffle(self.X_y)
+        for j in range(num_batches):
             batch_X = self.train_X[j * batch_size: (j + 1) * batch_size]
             batch_y = self.train_y[j * batch_size: (j + 1) * batch_size]
             assert set(map(len, batch_X)) == {self.num_steps}

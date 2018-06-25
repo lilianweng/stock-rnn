@@ -13,7 +13,7 @@ class RNNConfig():
 
     def to_dict(self):
         dct = self.__class__.__dict__
-        return {k: v for k, v in dct.iteritems() if not k.startswith('__') and not callable(v)}
+        return {k: v for k, v in dct.items() if not k.startswith('__') and not callable(v)}
 
     def __str__(self):
         return str(self.to_dict())
@@ -23,7 +23,7 @@ class RNNConfig():
 
 
 DEFAULT_CONFIG = RNNConfig()
-print "Default configuration:", DEFAULT_CONFIG.to_dict()
+print("Default configuration:", DEFAULT_CONFIG.to_dict())
 
 DATA_DIR = "data"
 LOG_DIR = "logs"
