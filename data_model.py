@@ -26,6 +26,7 @@ class StockDataSet():
 
         # Read csv file
         raw_df = pd.read_csv(os.path.join("data", "%s.csv" % stock_sym))
+        raw_df.sort_values(by='Date').reset_index()
 
         # Merge into one sequence
         if close_price_only:
