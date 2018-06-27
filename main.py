@@ -56,7 +56,7 @@ def load_sp500(input_size, num_steps, batch_size, k=None, target_symbol=None, te
     print(info['file_exists'].value_counts().to_dict())
 
     info = info[info['file_exists'] == True].reset_index(drop=True)
-    info = info.sort('market_cap', ascending=False).reset_index(drop=True)
+    info = info.sort_values(by='market_cap', ascending=False).reset_index(drop=True)
 
     if k is not None:
         info = info.head(k)
