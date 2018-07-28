@@ -1,8 +1,7 @@
 *.*~
 *.pyc
 *.ipynb
-data/*.tsv
-data/*.csv
+data/**
 logs/*
 models/*
 checkpoints/*
@@ -10,3 +9,6 @@ images/*
 .idea/
 .ipynb_checkpoints/
 tmp_data/
+.DS_Store
+.pytest_cache/
+*.egg-info/
