@@ -27,7 +27,7 @@ class StockData(object):
 
         # Read csv file
         raw_df = pd.read_csv(get_path(f"data/{stock_sym}.csv"))
-        self.raw_seq = np.array(raw_df[price_column].tolist())
+        self.raw_seq = np.array(raw_df[price_column].astype(float).tolist())
         self.train_X, self.train_y, self.test_X, self.test_y = self._prepare_data(self.raw_seq)
 
         print("Loaded:", self.info())
@@ -125,10 +125,10 @@ class StockDataSet(object):
         self.test_labels = np.array(self.test_labels)
 
         print("stock symbols =", self.stock_syms)
-        print("len(test_X) =", len(self.test_X))
-        print("len(test_y) =", len(self.test_y))
-        print("len(test_symbols) =", len(self.test_symbols))
-        print("len(test_labels) =", len(self.test_labels))
+        print("test_X.shape =", self.test_X.shape)
+        print("test_y.shape =", self.test_y.shape)
+        print("test_symbols.shape =", self.test_symbols.shape)
+        print("test_labels.shape =", self.test_X.shape)
 
 
 def load_dataset(input_size, num_steps, k=None, target_symbol=None, test_ratio=0.05):

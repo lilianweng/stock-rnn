@@ -1,18 +1,19 @@
 """
 @author: lilianweng
+
+Recurrent neural network with LSTM cells.
 """
 from __future__ import print_function
 
 import os
 import shutil
 
-import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
-from tensorflow.contrib.tensorboard.plugins import projector
-
-from stock.model.base import BaseModelMixin
 from stock.dataset import StockDataSet
+from stock.model.base import BaseModelMixin
+from stock.utils import plot_prices
+from tensorflow.contrib.tensorboard.plugins import projector
 
 
 class LstmRNN(BaseModelMixin):
@@ -23,6 +24,7 @@ class LstmRNN(BaseModelMixin):
                  input_size: int = 1,
                  embed_size: int = None,
                  model_name: str = "rnn-test",
+                 weight_decay: float = 0.01,
                  saver_max_to_keep: int = 5):
         """
         Construct a RNN model using LSTM cell.
@@ -36,7 +38,7 @@ class LstmRNN(BaseModelMixin):
         - keep_prob (int): (1.0 - dropout rate.) for a LSTM cell.
         - embed_size (int): length of embedding vector, only used when stock_count > 1.
         """
-        super().__init__(model_name, saver_max_to_keep=saver_max_to_keep)
+        super().__init__(model_name or 'rnn-test', saver_max_to_keep=saver_max_to_keep)
 
         self.stock_count = stock_count
 
@@ -44,6 +46,7 @@ class LstmRNN(BaseModelMixin):
         self.num_layers = num_layers
         self.num_steps = num_steps
         self.input_size = input_size
+        self.weight_decay = weight_decay
 
         self.use_embed = (embed_size is not None) and (embed_size > 0)
         self.embed_size = embed_size or -1
@@ -88,7 +91,7 @@ class LstmRNN(BaseModelMixin):
 
             # stock_label_embeds.shape = (batch_size, embedding_size)
             stacked_labels = tf.tile(self.labels, [1, self.num_steps],
-                                      name='stacked_stock_labels')
+                                     name='stacked_stock_labels')
             stacked_embeds = tf.nn.embedding_lookup(self.embed_matrix, stacked_labels)
 
             # After concat, inputs.shape = (batch_size, num_steps, input_size + embed_size)
@@ -122,19 +125,24 @@ class LstmRNN(BaseModelMixin):
         self.pred_summ = tf.summary.histogram("pred", self.pred)
 
         # self.loss = -tf.reduce_sum(targets * tf.log(tf.clip_by_value(prediction, 1e-10, 1.0)))
-        self.loss = tf.reduce_mean(tf.square(self.pred - self.targets), name="loss_mse_train")
+
+        self.t_vars = tf.trainable_variables()
+
+        self.mse = tf.reduce_mean(tf.square(self.pred - self.targets), name="mse")
+        self.mse_test = tf.reduce_mean(tf.square(self.pred - self.targets), name="mse_test")
+        self.reg = tf.reduce_mean([tf.nn.l2_loss(tv) for tv in self.t_vars], name="l2_reg")
+        self.loss = self.mse + self.weight_decay * self.reg
+
         self.optim = tf.train.RMSPropOptimizer(self.lr).minimize(self.loss, name="rmsprop_optim")
         # self.optim = tf.train.AdamOptimizer(self.lr).minimize(self.loss, name="adam_optim")
 
-        # Separated from train loss.
-        self.loss_test = tf.reduce_mean(tf.square(self.pred - self.targets), name="loss_mse_test")
+        self.mse_summ = tf.summary.scalar("train/mse", self.mse)
+        self.reg_summ = tf.summary.scalar("train/reg", self.reg)
+        self.loss_summ = tf.summary.scalar("train/loss", self.loss)
+        self.mse_test_summ = tf.summary.scalar("test/mse", self.mse_test)
+        self.lr_summ = tf.summary.scalar("train/learning_rate", self.lr)
 
-        self.loss_summ = tf.summary.scalar("loss/mse_train", self.loss)
-        self.loss_test_summ = tf.summary.scalar("loss/mse_test", self.loss_test)
-        self.lr_summ = tf.summary.scalar("learning_rate", self.lr)
-
-        self.t_vars = tf.trainable_variables()
-        self.merged_summ = tf.summary.merge_all()
+        self.summary = tf.summary.merge_all()
 
     def copy_embed_metadata(self):
         # Set up embedding visualization
@@ -154,23 +162,6 @@ class LstmRNN(BaseModelMixin):
         projector.visualize_embeddings(self.writer, projector_config)
 
     def train(self, dataset: StockDataSet, config: tf.app.flags.FLAGS):
-        if self.use_embed:
-            self.copy_embed_metadata()
-
-        # Log the graph.
-        self.writer.add_graph(self.sess.graph)
-        tf.global_variables_initializer().run(session=self.sess)
-
-        test_data_feed = {
-            self.lr: 0.0,
-            self.keep_prob: 1.0,
-            self.inputs: dataset.test_X,
-            self.targets: dataset.test_y,
-            self.labels: dataset.test_labels,
-        }
-
-        global_step = 0
-
         # Select samples for plotting.
         sample_syms = np.random.choice(dataset.test_symbols.flatten(),
                                        min(config.sample_size, len(dataset)),
@@ -180,6 +171,15 @@ class LstmRNN(BaseModelMixin):
             target_indices = np.where(dataset.test_symbols == sample_sym)[0]
             sample_indices[sample_sym] = target_indices
         print(sample_indices)
+
+        if self.use_embed:
+            self.copy_embed_metadata()
+
+        # Log the graph.
+        self.writer.add_graph(self.sess.graph)
+        tf.global_variables_initializer().run(session=self.sess)
+
+        global_step = 0
 
         print("Start training for stocks:", dataset.stock_syms)
         show_every_step = len(dataset) * 200 / config.input_size
@@ -201,56 +201,37 @@ class LstmRNN(BaseModelMixin):
                     self.targets: batch_y,
                     self.labels: batch_labels,
                 }
-                train_loss, _, train_merged_sum = self.sess.run(
-                    [self.loss, self.optim, self.merged_summ], train_data_feed)
+                train_loss, train_mse, _, train_merged_sum = self.sess.run(
+                    [self.loss, self.mse, self.optim, self.summary], train_data_feed)
                 self.writer.add_summary(train_merged_sum, global_step=global_step)
 
                 if np.mod(global_step, show_every_step) == 1:
-                    test_loss, test_pred = self.sess.run([self.loss_test, self.pred],
-                                                         test_data_feed)
-                    print("Step:%d [Epoch:%d] [Learning rate: %.6f] train_loss:%.6f test_loss:"
-                          "%.6f" % (global_step, epoch, learning_rate, train_loss, test_loss))
-
-                    # Plot samples
-                    for sample_sym, indices in sample_indices.items():
-                        sample_preds = test_pred[indices]
-                        sample_truth = dataset.test_y[indices]
-                        image_name = f"{sample_sym}_epoch{epoch:02d}_step{epoch_step:04d}.png"
-                        self.plot_samples(
-                            sample_preds, sample_truth, image_name, stock_sym=sample_sym)
+                    sample_img_name = f"{sample_sym}_epoch{epoch:02d}_step{epoch_step:04d}.png"
+                    test_mse = self.evaluate(dataset, sample_indices, sample_img_name)
+                    print("Step:%d [Epoch:%d] lr: %.6f train_loss:%.6f train_mse:%.6f test_loss:"
+                          "%.6f" % (global_step, epoch, learning_rate, train_loss, train_mse, test_mse))
 
             # Save model every epoch
             # self.save_model(global_step)
 
-        final_pred, final_loss = self.sess.run([self.pred, self.loss], test_data_feed)
-
         # Save the final model
         self.save_model(global_step)
-        return final_pred
 
-    def evaluate(self):
-        pass
+    def evaluate(self, dataset, sample_indices, sample_img_name):
+        test_data_feed = {
+            self.lr: 0.0,
+            self.keep_prob: 1.0,
+            self.inputs: dataset.test_X,
+            self.targets: dataset.test_y,
+            self.labels: dataset.test_labels,
+        }
+        test_mse, test_pred = self.sess.run([self.mse_test, self.pred], test_data_feed)
 
-    def plot_samples(self, preds, targets, image_name, stock_sym=None, multiplier=25):
-        def _flatten(seq):
-            return np.array([x for y in seq for x in y])
+        # Plot samples
+        for sample_sym, indices in sample_indices.items():
+            sample_preds = test_pred[indices]
+            sample_truths = dataset.test_y[indices]
+            image_path = os.path.join(self.image_dir, sample_img_name)
+            plot_prices(sample_preds, sample_truths, image_path, stock_sym=None)
 
-        truths = _flatten(targets)[-200:]
-        preds = (_flatten(preds) * multiplier)[-200:]
-        days = range(len(truths))[-200:]
-
-        plt.figure(figsize=(12, 6))
-        plt.plot(days, truths, label='truth')
-        plt.plot(days, preds, label='pred')
-        plt.legend(loc='upper left', frameon=False)
-        plt.xlabel("day")
-        plt.ylabel("normalized price")
-        plt.ylim((min(truths), max(truths)))
-        plt.grid(ls='--')
-
-        if stock_sym:
-            plt.title(stock_sym + " | Last %d days in test" % len(truths))
-
-        image_path = os.path.join(self.image_dir, image_name)
-        plt.savefig(image_path, format='png', bbox_inches='tight', transparent=True)
-        plt.close()
+        return test_mse

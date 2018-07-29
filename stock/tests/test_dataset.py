@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from stock.dataset import StockData, StockDataSet
-from stock.utils import get_path
+from stock.utils import get_path, recover_normalized_prices
 
 
 class TestDataModel(TestCase):
@@ -41,3 +41,16 @@ class TestDataModel(TestCase):
         dataset = StockDataSet(['FB', 'GOOG'])
         for sym, batch_X, batch_y in dataset.generate_one_epoch(100):
             print(sym, batch_X.shape, batch_y.shape)
+
+    def test_recover_normalized_prices(self):
+        d1 = StockData(input_size=3, num_steps=5, stock_sym="_TEST_")
+        d2 = StockData(input_size=3, num_steps=5, stock_sym="_TEST_", normalized=False)
+        for i in range(5):
+            init_denom = d2.train_X[i - 1][0][-1] if i > 0 else d2.train_X[i][0][0]
+            recovered_prices = recover_normalized_prices(d1.train_X[i], init_denom)
+            assert np.allclose(recovered_prices, d2.train_X[i])
+
+    def test_random_stuff(self):
+        d = StockDataSet(['_TEST_'], input_size=3, num_steps=5, normalized=False)
+        print(d.test_X[:10])
+        print(d.test_y[:10])

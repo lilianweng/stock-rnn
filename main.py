@@ -9,6 +9,10 @@ from stock.dataset import load_dataset
 from stock.model.rnn import LstmRNN
 from stock.model.tcn import TemporalConvNet
 
+"""
+python main.py --model_type='RNN' --stock_symbol='SP500' --num_steps=300 --hidden_size=64 --init_lr=0.0001 --train
+python main.py --model_type='TCN' --stock_symbol='SP500' --num_steps=300 --hidden_size=64 --num_layers=3 --train
+"""
 flags = tf.app.flags
 flags.DEFINE_string("model_type", "RNN", "Types of models ['TCN', 'RNN']")
 flags.DEFINE_integer("stock_count", 1, "Stock count [1]")
@@ -16,15 +20,17 @@ flags.DEFINE_integer("input_size", 1, "Input size [1]")
 flags.DEFINE_integer("num_steps", 30, "Num of steps [30]")
 flags.DEFINE_integer("num_layers", 1, "Num of layer [1]")
 flags.DEFINE_integer("hidden_size", 128, "LSTM cell size or hidden layer size in TCN. [128]")
-flags.DEFINE_integer("batch_size", 32, "The size of batch images [32]")
+flags.DEFINE_integer("batch_size", 64, "The size of batch images [64]")
 flags.DEFINE_float("keep_prob", 0.8, "Keep probability of dropout layer. [0.8]")
 flags.DEFINE_float("init_lr", 0.0005, "Initial learning rate at early stage. [0.001]")
 flags.DEFINE_float("lr_decay", 0.9, "Decay rate of learning rate. [0.99]")
 flags.DEFINE_integer("init_epoch", 5, "Num. of epoches considered as early stage. [5]")
 flags.DEFINE_integer("max_epoch", 20, "Total training epoches. [20]")
+flags.DEFINE_float("weight_decay", 0.01, "Weight decay for the L2 regularization. [0.01]")
 flags.DEFINE_integer("embed_size", None, "If provided, use embedding vector of this size. [None]")
 flags.DEFINE_string("stock_symbol", None, "Target stock symbol [None]")
 flags.DEFINE_integer("sample_size", 4, "Number of stocks to plot during training. [4]")
+flags.DEFINE_string("model_name", None, "Model name [None]")
 flags.DEFINE_boolean("train", False, "True for training, False for testing [False]")
 
 FLAGS = flags.FLAGS
@@ -55,11 +61,16 @@ def main(_):
             num_steps=FLAGS.num_steps,
             input_size=FLAGS.input_size,
             embed_size=FLAGS.embed_size,
+            weight_decay=FLAGS.weight_decay,
+            model_name=FLAGS.model_name,
         )
     elif FLAGS.model_type == 'TCN':
         model = TemporalConvNet(
             seq_len=FLAGS.num_steps,
             hidden_size=FLAGS.hidden_size,
+            num_layers=FLAGS.num_layers,
+            weight_decay=FLAGS.weight_decay,
+            model_name=FLAGS.model_name,
         )
     else:
         raise ValueError(f"Unknown model type: {FLAGS.model_type}.")
