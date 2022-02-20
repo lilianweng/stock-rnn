@@ -15,6 +15,23 @@ class StockDataSet(object):
                  test_ratio=0.1,
                  normalized=True,
                  close_price_only=True):
+        """
+        Args:
+            stock_sym: (str) filename*
+            input_size, num_steps: (int) used for data processing
+                comes from FLAGS object when called
+            test_ratio: (int) [0, 1]
+            normalized: (bool) switch normalization in data processing
+
+        *NOTE:
+        data are read from DATA_FOLDER/stock_sym, and they
+        must be in the format:
+
+        raw_df: pd.DataFrame, shape(data_len, columns) 
+        only constrain is that:
+        assert 'Close' in columns == True
+
+        """
         self.stock_sym = stock_sym
         self.input_size = input_size
         self.num_steps = num_steps
@@ -39,6 +56,15 @@ class StockDataSet(object):
             self.stock_sym, len(self.train_X), len(self.test_y))
 
     def _prepare_data(self, seq):
+        """
+        this method is used for training data, includes window
+        normalization based on the value of self.normalized
+
+        Args:
+            seq: (pd.Series), raw_df['Close'].tolist()
+        Returns:
+            train_X, train_y, test_X, test_y: (numpy.ndarray)
+        """
         # split into items of input_size
         seq = [np.array(seq[i * self.input_size: (i + 1) * self.input_size])
                for i in range(len(seq) // self.input_size)]
