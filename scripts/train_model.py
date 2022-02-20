@@ -7,16 +7,16 @@ import os
 import sys; sys.path.append("..")
 import tensorflow as tf
 
-from build_graph import build_lstm_graph_with_config
-from config import DEFAULT_CONFIG, MODEL_DIR
+from scripts.build_graph import build_lstm_graph_with_config
+from scripts.config import DEFAULT_CONFIG, MODEL_DIR
 from data_model import StockDataSet
 
 
-def load_data(stock_name, input_size, num_steps):
+def load_data(stock_name, input_size, num_steps, batch_size):
     stock_dataset = StockDataSet(stock_name, input_size=input_size, num_steps=num_steps,
-                                 test_ratio=0.1, close_price_only=True)
-    print "Train data size:", len(stock_dataset.train_X)
-    print "Test data size:", len(stock_dataset.test_X)
+                                 batch_size=batch_size, test_ratio=0.1, close_price_only=True)
+    print("Train data size:", len(stock_dataset.train_X))
+    print("Test data size:", len(stock_dataset.test_X))
     return stock_dataset
 
 
@@ -26,7 +26,7 @@ def _compute_learning_rates(config=DEFAULT_CONFIG):
             config.learning_rate_decay ** max(float(i + 1 - config.init_epoch), 0.0)
         ) for i in range(config.max_epoch)
     ]
-    print "Middle learning rate:", learning_rates_to_use[len(learning_rates_to_use) // 2]
+    print("Middle learning rate:", learning_rates_to_use[len(learning_rates_to_use) // 2])
     return learning_rates_to_use
 
 
@@ -37,7 +37,8 @@ def train_lstm_graph(stock_name, lstm_graph, config=DEFAULT_CONFIG):
     """
     stock_dataset = load_data(stock_name,
                               input_size=config.input_size,
-                              num_steps=config.num_steps)
+                              num_steps=config.num_steps,
+                              batch_size=config.batch_size)
 
     final_prediction = []
     final_loss = None
@@ -48,7 +49,7 @@ def train_lstm_graph(stock_name, lstm_graph, config=DEFAULT_CONFIG):
         config.lstm_size, config.num_steps,
         config.input_size, config.batch_size, config.max_epoch)
 
-    print "Graph Name:", graph_name
+    print("Graph Name:", graph_name)
 
     learning_rates_to_use = _compute_learning_rates(config)
     with tf.Session(graph=lstm_graph) as sess:
@@ -87,18 +88,18 @@ def train_lstm_graph(stock_name, lstm_graph, config=DEFAULT_CONFIG):
             if epoch_step % 10 == 0:
                 test_loss, _pred, _summary = sess.run([loss, prediction, merged_summary], test_data_feed)
                 assert len(_pred) == len(stock_dataset.test_y)
-                print "Epoch %d [%f]:" % (epoch_step, current_lr), test_loss
+                print("Epoch %d [%f]:" % (epoch_step, current_lr), test_loss)
                 if epoch_step % 50 == 0:
-                    print "Predictions:", [(
-                        map(lambda x: round(x, 4), _pred[-j]),
-                        map(lambda x: round(x, 4), stock_dataset.test_y[-j])
-                    ) for j in range(5)]
+                    print("Predictions:", [(
+                        [round(x, 4) for x in _pred[-j]],
+                        [round(x, 4) for x in stock_dataset.test_y[-j]]
+                    ) for j in range(5)])
 
             writer.add_summary(_summary, global_step=epoch_step)
 
-        print "Final Results:"
+        print("Final Results:")
         final_prediction, final_loss = sess.run([prediction, loss], test_data_feed)
-        print final_prediction, final_loss
+        print(final_prediction, final_loss)
 
         graph_saver_dir = os.path.join(MODEL_DIR, graph_name)
         if not os.path.exists(graph_saver_dir):

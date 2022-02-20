@@ -4,7 +4,7 @@ Load a trained model
 import os
 import tensorflow as tf
 
-from config import MODEL_DIR
+from scripts.config import MODEL_DIR
 
 
 def prediction_by_trained_graph(graph_name, max_epoch, test_X, test_y):

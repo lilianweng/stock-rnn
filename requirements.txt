@@ -1,0 +1,7 @@
+BeautifulSoup4
+numpy>=1.13.1
+pandas>=0.16.2
+scikit-learn>=0.16.1
+scipy>=0.19.1
+tensorflow>=1.2.1
+urllib3>=1.8
